@@ -1,0 +1,17 @@
+# Зависимости и сборочные артефакты ставятся внутри контейнера заново.
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Секреты.
+.env
+.env.local
+
+# Системные/IDE файлы.
+.git/
+.gitignore
+.idea/
+.vscode/
+*.log
+.DS_Store

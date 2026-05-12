@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* Дизайн-токены SBORIKA — те же, что в лендинге, чтобы бренд был единым.
+   Tailwind 4 автоматически создаёт utility-классы из --color-* переменных. */
+@theme {
+  --color-bg: #f5f5f5;
+  --color-brand: #ea5c1f;
+  --color-line: #d6d7d7;
+  --color-slate: #4f5d75;
+  --color-ink: #212431;
+
+  --font-sans: "Inter", "Helvetica Neue", "Arial", system-ui, sans-serif;
+  --default-font-family: var(--font-sans);
+}
+
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}

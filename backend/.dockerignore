@@ -1,0 +1,26 @@
+# Виртуальные окружения Python — должны пересобираться внутри контейнера.
+venv/
+.venv/
+
+# Кэш Python.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Секреты — пробрасываются через переменные окружения compose.
+.env
+.env.local
+
+# Локальные артефакты Django.
+staticfiles/
+media/
+db.sqlite3
+
+# Системные/IDE файлы.
+.git/
+.gitignore
+.idea/
+.vscode/
+*.log
+.DS_Store

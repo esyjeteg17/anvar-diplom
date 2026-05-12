@@ -1,0 +1,93 @@
+# Корневая docker-compose конфигурация проекта SBORIKA (Anvar).
+# Поднимает 4 сервиса: PostgreSQL, Django-бэкенд, лендинг и админ-панель.
+#
+# Запуск:   docker compose up --build
+# Остановка: docker compose down
+# Полная очистка (с БД): docker compose down -v
+
+services:
+  # --- База данных PostgreSQL ---
+  db:
+    image: postgres:16-alpine
+    container_name: anvar-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: anvar_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      # Пробрасываем наружу, чтобы можно было подключаться локально из DBeaver и т.п.
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # Бэкенд ждёт, пока БД действительно начнёт принимать подключения.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d anvar_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- Django-бэкенд (DRF API) ---
+  backend:
+    build:
+      context: ./backend
+    container_name: anvar-backend
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-change-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      # backend нужно добавить в ALLOWED_HOSTS, чтобы запросы между контейнерами проходили.
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      POSTGRES_DB: anvar_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Хост БД внутри docker-сети — имя сервиса.
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      CORS_ALLOWED_ORIGINS: http://localhost:4040,http://127.0.0.1:4040,http://localhost:4041,http://127.0.0.1:4041
+      CSRF_TRUSTED_ORIGINS: http://localhost:4040,http://127.0.0.1:4040,http://localhost:4041,http://127.0.0.1:4041
+    ports:
+      - "8042:8042"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Перед запуском сервера прогоняем миграции — БД к этому моменту уже healthy.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8042"
+    volumes:
+      # Монтируем исходники, чтобы изменения в коде подхватывались без пересборки образа.
+      - ./backend:/app
+      # А вот venv хоста не должен попасть внутрь — перетрёт зависимости из образа.
+      - /app/venv
+
+  # --- Публичный лендинг (Nuxt 4) ---
+  landing:
+    build:
+      context: ./frontend-landing
+    container_name: anvar-landing
+    restart: unless-stopped
+    environment:
+      # apiBase используется в браузере — обращаемся к проброшенному порту хоста.
+      NUXT_PUBLIC_API_BASE: http://localhost:8042/api
+    ports:
+      - "4040:4040"
+    depends_on:
+      - backend
+
+  # --- Админ-панель (Nuxt 4) ---
+  admin:
+    build:
+      context: ./frontend-admin
+    container_name: anvar-admin
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:8042/api
+    ports:
+      - "4041:4041"
+    depends_on:
+      - backend
+
+volumes:
+  # Том для данных PostgreSQL — переживает пересоздание контейнера.
+  db_data:
