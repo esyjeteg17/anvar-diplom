@@ -17,12 +17,12 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       # Пробрасываем наружу, чтобы можно было подключаться локально из DBeaver и т.п.
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       # Бэкенд ждёт, пока БД действительно начнёт принимать подключения.
-      test: ["CMD-SHELL", "pg_isready -U postgres -d anvar_db"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d anvar_db']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -37,17 +37,17 @@ services:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-change-me}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
       # backend нужно добавить в ALLOWED_HOSTS, чтобы запросы между контейнерами проходили.
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      DJANGO_ALLOWED_HOSTS: 159.194.213.102,127.0.0.1,backend
       POSTGRES_DB: anvar_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       # Хост БД внутри docker-сети — имя сервиса.
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      CORS_ALLOWED_ORIGINS: http://localhost:4040,http://127.0.0.1:4040,http://localhost:4041,http://127.0.0.1:4041
-      CSRF_TRUSTED_ORIGINS: http://localhost:4040,http://127.0.0.1:4040,http://localhost:4041,http://127.0.0.1:4041
+      CORS_ALLOWED_ORIGINS: http://159.194.213.102:4040,http://127.0.0.1:4040,http://159.194.213.102:4041,http://127.0.0.1:4041
+      CSRF_TRUSTED_ORIGINS: http://159.194.213.102:4040,http://127.0.0.1:4040,http://159.194.213.102:4041,http://127.0.0.1:4041
     ports:
-      - "8042:8042"
+      - '8042:8042'
     depends_on:
       db:
         condition: service_healthy
@@ -69,9 +69,9 @@ services:
     restart: unless-stopped
     environment:
       # apiBase используется в браузере — обращаемся к проброшенному порту хоста.
-      NUXT_PUBLIC_API_BASE: http://localhost:8042/api
+      NUXT_PUBLIC_API_BASE: http://159.194.213.102:8042/api
     ports:
-      - "4040:4040"
+      - '4040:4040'
     depends_on:
       - backend
 
@@ -82,9 +82,9 @@ services:
     container_name: anvar-admin
     restart: unless-stopped
     environment:
-      NUXT_PUBLIC_API_BASE: http://localhost:8042/api
+      NUXT_PUBLIC_API_BASE: http://159.194.213.102:8042/api
     ports:
-      - "4041:4041"
+      - '4041:4041'
     depends_on:
       - backend
 
